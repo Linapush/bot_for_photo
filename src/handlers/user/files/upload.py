@@ -47,23 +47,19 @@ async def upload_photo(message: types.Message, state: FSMContext):
 
     if message.photo and len(message.photo) > 0:
         file_id = message.photo[-1].file_id
+        file_name = message.photo[-1].file_name 
     elif message.document:
         file_id = message.document.file_id
+        file_name = message.document.file_name 
     else:
         await message.answer("Пожалуйста, отправьте фотографию или файл.")
         logger.info("Пользователь не отправил фото или файл.")
         return
 
-    try:
-        file = await message.bot.get_file(file_id)
-        file_path = await message.bot.download_file(file.file_path)
+    file = await message.bot.get_file(file_id)
+    file_bytes = await file.download(dest='tmp_file')
 
-    except ClientResponseError as e:
-        logger.error(f"Ошибка загрузки файла: {e}")
-        await message.answer(f"Произошла ошибка при загрузке файла: {e}")
-        return
-
-    if not check_file_size(file_path, MAX_FILE_SIZE):
+    if not check_file_size(file, MAX_FILE_SIZE):
         await message.answer(f"Размер файла слишком большой. Максимальный размер: {MAX_FILE_SIZE} байт.")
         logger.info("Слишком большой файл")
         return
@@ -72,13 +68,16 @@ async def upload_photo(message: types.Message, state: FSMContext):
     logger.info("Загрузка файла...")
 
     try:
-        with open(file_path, 'rb') as file:
-            upload_file = UploadFile(file=file, filename=file_path)
-            logger.info("Отправляем файл на сервер:", file_path)
-            response = await do_request('POST', '/upload_file', file=upload_file)
-            logger.info("Получен ответ от сервера:", response)
-            await message.answer("Файл успешно загружен в MINIO!", reply_markup=get_main_keyboard(role='user'))
-            logger.info("Файл успешно загружен в MINIO")
+        data = FormData()
+        data.add_field('file', file_bytes, filename=file_name)
+        # file_name = file.file_path.split('/')[-1]
+        # upload_file = UploadFile(file=file, filename=file_name)
+        logger.info("Отправляем файл на сервер:", file_name)
+        # response = await do_request('POST', '/upload_file', file=upload_file)
+        response = await do_request('POST', '/upload_file', data=data)
+        logger.info("Получен ответ от сервера:", response)
+        await message.answer("Файл успешно загружен в MINIO!", reply_markup=get_main_keyboard(role='user'))
+        logger.info("Файл успешно загружен в MINIO")
 
     except ClientResponseError as e:
         logger.error("Ошибка загрузки файла:", e)

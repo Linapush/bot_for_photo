@@ -29,7 +29,7 @@ class AuthMiddleware(BaseMiddleware):
             and current_state != LoginState.enter_code
         ):
             bot: Bot = data['bot']
-            await bot.send_message(text='Вы не авторизованы.\n Чтобы авторизоваться, нажмите /start', chat_id=data['event_chat'].id)
+            await bot.send_message(text='Вы не авторизованы.\nЧтобы авторизоваться, нажмите /start', chat_id=data['event_chat'].id)
             raise SkipHandler('Unauthorized')
 
         if access_token is not None:
