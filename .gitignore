@@ -1,0 +1,9 @@
+.idea
+*.env
+/venv/
+*__pycache__
+.pytest_cache
+/.coverage
+a_notes
+.vscode
+.venv
