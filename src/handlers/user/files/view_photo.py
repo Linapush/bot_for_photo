@@ -8,7 +8,7 @@ from src.buttons.actions.getter import VIEW_PHOTO, get_main_keyboard
 from src.buttons.files.get_download_button import get_download_button
 from src.handlers.user.files.router import files_router
 from src.logger import logger
-from src.template.render import render
+# from src.template.render import render
 from src.utils.request import do_request
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from conf.config import settings

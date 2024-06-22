@@ -57,7 +57,7 @@ async def upload_photo(message: types.Message, state: FSMContext):
         return
 
     file = await message.bot.get_file(file_id)
-    file_bytes = await file.download(dest='tmp_file')
+    # file_bytes = await message.bot.download_file(file.file_path)
 
     if not check_file_size(file, MAX_FILE_SIZE):
         await message.answer(f"Размер файла слишком большой. Максимальный размер: {MAX_FILE_SIZE} байт.")
@@ -68,17 +68,15 @@ async def upload_photo(message: types.Message, state: FSMContext):
     logger.info("Загрузка файла...")
 
     try:
-        data = FormData()
-        data.add_field('file', file_bytes, filename=file_name)
+        # data = FormData()
+        # data.add_field('file', file, filename=file_name)
         # file_name = file.file_path.split('/')[-1]
-        # upload_file = UploadFile(file=file, filename=file_name)
+        upload_file = UploadFile(file=file, filename=file_name)
         logger.info("Отправляем файл на сервер:", file_name)
-        # response = await do_request('POST', '/upload_file', file=upload_file)
-        response = await do_request('POST', '/upload_file', data=data)
+        response = await do_request('POST', '/upload_file', file={"file": (file_name, upload_file)})
         logger.info("Получен ответ от сервера:", response)
         await message.answer("Файл успешно загружен в MINIO!", reply_markup=get_main_keyboard(role='user'))
         logger.info("Файл успешно загружен в MINIO")
-
     except ClientResponseError as e:
         logger.error("Ошибка загрузки файла:", e)
         await message.answer(f"Ошибка загрузки файла: {e} во время выполнения запроса: {response}")
