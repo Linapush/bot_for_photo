@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     WEBHOOK_URL: str = ''
 
     REDIS_HOST: str = 'redis_dev'
-    REDIS_PORT: int = 6378
+    REDIS_PORT: int = 6379
     REDIS_PASSWORD: str
     REDIS_DB: int = 0
 

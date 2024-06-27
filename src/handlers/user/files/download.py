@@ -1,3 +1,4 @@
+import io
 from aiogram import F, types
 from aiogram.fsm.context import FSMContext
 from src.state.file_state import FilesStates
@@ -26,9 +27,10 @@ async def download_photo(message: types.Message | types.CallbackQuery, state: FS
             )
             if response.status == 200:
                 file = await response.read()
-                file_name = f"file_{file_id}.jpg"
+                file_name = io.BytesIO()
                 with open(file_name, 'wb') as f:
                     f.write(file)
+                    f.seek(0)
                 await message.answer(
                     text='Файл успешно скачан',
                     document=open(file_name, 'rb'),
