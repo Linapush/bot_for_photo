@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    PHOTO_BACKEND_HOST: str = 'http://web_dev:8000'
+    PHOTO_BACKEND_HOST: str = 'http://web_dev:8002'
 
     BOT_TOKEN: str
     WEBHOOK_URL: str = ''

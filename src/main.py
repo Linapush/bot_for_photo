@@ -60,7 +60,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 def create_app() -> FastAPI:
     app = FastAPI(docs_url='/swagger', lifespan=lifespan)
 
-    url = 'https://web_dev:8000'
+    url = 'https://web_dev:8002'
     response = requests.get(url)
 
     print(response.text)
