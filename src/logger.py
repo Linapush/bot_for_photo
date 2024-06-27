@@ -2,12 +2,12 @@ import logging
 from contextvars import ContextVar
 
 import yaml
-# yaml — «дружественный» формат сериализации данных, концептуально близкий к языкам разметки, но ориентированный на удобство ввода-вывода типичных структур данных многих языков программирования
+
 
 with open('conf/logging.conf.yml', 'r') as f:
     LOGGING_CONFIG = yaml.full_load(f)
 
-# запись в консоль с correlation_id
+
 class ConsoleFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         try:

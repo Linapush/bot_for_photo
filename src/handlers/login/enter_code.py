@@ -26,16 +26,14 @@ async def enter_code(message: types.Message, state: FSMContext) -> None:
                 'code': code,
             },
         )
-        
+        await state.update_data(access_token=data['access_token'])
+        await state.set_state(LoginState.authorized)
+        await message.answer(
+            'Вы успешно авторизовались', reply_markup=get_main_keyboard(role='user')
+        )
+        logger.info('Авторизованы, переход к клавиатурам')
+
     except ClientResponseError:
         await message.answer('Код неверный.')
         logger.error('Code error')
         return
-
-    data = await state.update_data(data)
-    await state.set_state(LoginState.authorized)
-
-    await message.answer(
-        'Вы успешно авторизовались', reply_markup=get_main_keyboard(role='user') 
-    )
-    logger.info('Авторизованы, переход к клавиатурам')

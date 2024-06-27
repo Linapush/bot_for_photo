@@ -7,8 +7,10 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import TelegramObject
 
 from src.state.login import LoginState
+from src.logger import logger
 
 access_token_cxt: ContextVar[str] = ContextVar('access_token_cxt')
+logger.info(access_token_cxt)
 
 # middleware для проверки авторизации пользователя
 class AuthMiddleware(BaseMiddleware):

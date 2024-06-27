@@ -18,15 +18,10 @@ def _get_keyboard_user(*kwargs) -> types.ReplyKeyboardMarkup:
         [types.KeyboardButton(text=UPLOAD_PHOTO, callback_data="choose_file")],
         [types.KeyboardButton(text=VIEW_PHOTO)],
         # [types.KeyboardButton(text=SELECT_PHOTO)],
-        [types.KeyboardButton(text=DOWNLOAD_PHOTO)],
+        # [types.KeyboardButton(text=DOWNLOAD_PHOTO)],
     ]
     return types.ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
 
 role_to_keyboard_getter: dict[str, Callable[..., types.ReplyKeyboardMarkup]] = {
     'user': _get_keyboard_user,
 }
-
-# role_to_keyboard_getter: dict[str, Callable[[P.kwargs], types.ReplyKeyboardMarkup]] = {
-#     'user': _get_keyboard_user,
-#     # 'admin': _get_keyboard_admin,
-# }

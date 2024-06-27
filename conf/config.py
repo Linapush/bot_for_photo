@@ -1,6 +1,7 @@
 from typing import List
 from pydantic_settings import BaseSettings
 
+
 class Settings(BaseSettings):
     PHOTO_BACKEND_HOST: str = 'http://web_dev:8000'
 
@@ -15,7 +16,6 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = ''
 
     RETRY_COUNT: int = 3
-    
-    # MAX_DELIVERY_WAIT_TIME: int = 60 * 10
+
 
 settings = Settings()

@@ -31,6 +31,7 @@ async def do_request(
 ) -> Any:
     try:
         headers_ = {'Authorization': f'Bearer {access_token_cxt.get()}'}
+        logger.info(f"Токен доступа в заголовке запроса: {headers_['Authorization']}")
     except LookupError:
         headers_ = {}
 
@@ -39,6 +40,9 @@ async def do_request(
 
     if headers is not None:
         headers_.update(headers)
+        logger.info(f"Headers update: {headers_}")
+
+    logger.info(f"URL запроса: {url}")
 
     final_exc = None
     async with ClientSessionWithCorrId(connector=connector, timeout=timeout) as session:
@@ -53,9 +57,14 @@ async def do_request(
                     params=params,
                 ) as response:
                     response.raise_for_status()
-                    return await response.json()
+                    response_json = await response.json()
+                    logger.info(f"Response from {url}: {response_json}")
+                    return response_json
             except aiohttp.ClientResponseError as exc:
                 logger.exception('Http error')
+                if exc.status == 404:
+                    logger.error(f'Ошибка 404 Not Found: {exc}')
+
                 final_exc = exc
 
     if final_exc is not None:
