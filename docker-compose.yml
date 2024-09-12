@@ -7,7 +7,7 @@ services:
       dockerfile: docker/Dockerfile
       context: .
     ports:
-      - "8002:8001"
+      - "8001:8001"
     command: scripts/web/startup.sh -m -l
     restart: on-failure
     env_file:

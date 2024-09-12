@@ -67,51 +67,105 @@ async def process_month(message: types.Message, state: FSMContext) -> None:
     logger.info(f'State = waiting_for_day, month = {month}')
 
 
-# @files_router.message(F.text & FilesStates.waiting_for_day)
-# @files_router.message(F.text)
 @files_router.message(FilesStates.waiting_for_day)
 async def process_day(message: types.Message, state: FSMContext) -> None:
+    user_id = message.from_user.id
     current_state = await state.get_state()
-    if current_state == FilesStates.waiting_for_day.state:
+    if current_state == FilesStates.waiting_for_day.state: 
         day = int(message.text)
+        logger.info(f"День {day}")
         data = await state.get_data()
+        logger.info(f"Дата {data}")
         year = data.get('year')
+        logger.info(f"Год {year}")
         month = data.get('month')
-        user_id = message.from_user.id
-
+        logger.info(f"Месяц {month}")
         logger.info(f"Пользователь {user_id} выбрал дату: {year}-{month}-{day}")
 
         try:
-            file_info = await do_request(
-                f'{settings.PHOTO_BACKEND_HOST}/file/{year}/{month}/{day}',
-                json={'user_id': user_id}
+            data = await do_request(
+                f'{settings.PHOTO_BACKEND_HOST}/file/file/?year={year}&month={month}&day={day}',
+                method='GET'
             )
-            logger.info(f"Запрос на сервер отправлен: {file_info}")
-
-            if file_info:
-                file_url = file_info['file_url']
-                file_id = file_info['file_id']
-                input_file = InputFile(file_url)
-                await message.answer_photo(
-                    photo=input_file,
-                    caption=f"File ID: {file_id}",
-                    reply_markup=get_download_button(file_id),
-                )
-                logger.info('Файлы переданы')
-                return
-
-            await message.answer('Файлы не найдены для указанных параметров.')
-            logger.info('Файлы не найдены')
-            return
-
+            logger.info(f"Данные из do_request: {data}")
         except ClientResponseError as e:
-            if e.status == 404:
-                await message.answer(
-                    'Файлы не найдены для указанных параметров.',
-                    reply_markup=get_main_keyboard(role='user'))
-                logger.info('Файлы не найдены')
+            if "Not Found" in e.message:
+                await message.answer('Файлы не найдены для указанных параметров.')
+                logger.info('File not found')
                 return
             else:
-                await message.answer('Произошла ошибка.')
-                logger.error(f'Error getting files: {e}')
-                return
+                await message.answer('Ваш код неверный')
+                logger.info('Code Error')
+            return
+        
+        if 'data' in data and data['data']:
+            files = data['data']
+            await message.answer('первый if')
+            if len(files) > 0:
+                file_info = files[0]  
+                file_url = file_info.get('file_url')
+                file_id = file_info.get('file_id')
+                await message.answer('второй if')
+
+                if file_url and file_id:
+                    await message.answer_photo(
+                        photo=file_url,
+                        caption=f"File ID: {file_id}",
+                        reply_markup=get_download_button(file_id),
+                    )
+                    logger.info(f"File transferred: file_id={file_id}, file_url={file_url}")
+                
+                    await state.update_data(file_id=file_id)
+                    return
+            await message.answer('Файлы не найдены для указанных параметров.')
+            logger.info('File not found')
+
+
+# @files_router.message(F.text & FilesStates.waiting_for_day)
+# @files_router.message(F.text)
+# @files_router.message(FilesStates.waiting_for_day)
+# async def process_day(message: types.Message, state: FSMContext) -> None:
+#     current_state = await state.get_state()
+#     if current_state == FilesStates.waiting_for_day.state:
+#         day = int(message.text)
+#         data = await state.get_data()
+#         year = data.get('year')
+#         month = data.get('month')
+#         user_id = message.from_user.id
+
+#         logger.info(f"Пользователь {user_id} выбрал дату: {year}-{month}-{day}")
+
+#         try:
+#             file_info = await do_request(
+#                 f'{settings.PHOTO_BACKEND_HOST}/file/{year}/{month}/{day}',
+#                 json={'user_id': user_id}
+#             )
+#             logger.info(f"Запрос на сервер отправлен: {file_info}")
+
+#             if file_info:
+#                 file_url = file_info['file_url']
+#                 file_id = file_info['file_id']
+#                 input_file = InputFile(file_url)
+#                 await message.answer_photo(
+#                     photo=input_file,
+#                     caption=f"File ID: {file_id}",
+#                     reply_markup=get_download_button(file_id),
+#                 )
+#                 logger.info('Файлы переданы')
+#                 return
+
+#             await message.answer('Файлы не найдены для указанных параметров.')
+#             logger.info('Файлы не найдены')
+#             return
+
+#         except ClientResponseError as e:
+#             if e.status == 404:
+#                 await message.answer(
+#                     'Файлы не найдены для указанных параметров.',
+#                     reply_markup=get_main_keyboard(role='user'))
+#                 logger.info('Файлы не найдены')
+#                 return
+#             else:
+#                 await message.answer('Произошла ошибка.')
+#                 logger.error(f'Error getting files: {e}')
+#                 return
