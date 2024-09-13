@@ -98,33 +98,65 @@ async def process_day(message: types.Message, state: FSMContext) -> None:
                 logger.info('Code Error')
             return
         
-        if 'data' in api_response and api_response['data']:
-        #if 'data' in api_response:
-            logger.info("Ключ 'data' найден.")
-            logger.info(f"Содержимое api_response['data']: {api_response['data']}")
-            files = api_response['data']
-            logger.info(files)
-            await message.answer('первый if')
-            if len(files) > 0:
-                file_info = files[0]  
-                file_url = file_info.get('file_url')
-                file_id = file_info.get('file_id')
-                await message.answer('второй if')
+        if isinstance(api_response, list) and api_response:
+            logger.info("Получен непустой список файлов.")
+            files = api_response
 
-                if file_url and file_id:
-                    await message.answer_photo(
-                        photo=file_url,
-                        caption=f"File ID: {file_id}",
-                        reply_markup=get_download_button(file_id),
-                    )
-                    logger.info(f"File transferred: file_id={file_id}, file_url={file_url}")
+            if len(files) > 0:
+                for file_info in files:
+                    file_name = file_info.get('file_name')
+                    file_id = file_info.get('file_id')
+
+                    if file_name and file_id:
+                        file_url = f"{settings.PHOTO_BACKEND_HOST}/files/{file_name}"
+                        await message.answer_photo(
+                            photo=file_url,
+                            caption=f"File ID: {file_id}",
+                            reply_markup=get_download_button(file_id),
+                        )
+                        logger.info(f"File transferred: file_id={file_id}, file_name={file_url}")
+
+                        # Обновляем состояние для каждого файла, если это необходимо
+                        await state.update_data(file_id=file_id)
+                    else:
+                        logger.info("URL или ID файла отсутствует.")
                 
-                    await state.update_data(file_id=file_id)
-                    return 
+                return 
             else:
-                logger.info("Ключ 'data' не найден.")
-            await message.answer('Файлы не найдены для указанных параметров.')
-            logger.info('File not found')
+                logger.info("Список файлов пуст.")
+        else:
+            logger.info("Ключ 'data' не найден.")
+        await message.answer('Файлы не найдены для указанных параметров.')
+        logger.info('File not found')
+        
+        # if 'data' in api_response and api_response['data']:
+        # #if 'data' in api_response:
+        #     logger.info("Ключ 'data' найден.")
+        #     logger.info(f"Содержимое api_response['data']: {api_response['data']}")
+        #     files = api_response['data']
+        #     logger.info(files)
+        #     await message.answer('первый if')
+        #     if len(files) > 0:
+        #         file_info = files[0]  
+        #         file_url = file_info.get('file_url')
+        #         file_id = file_info.get('file_id')
+        #         await message.answer('второй if')
+
+        #         if file_url and file_id:
+        #             await message.answer_photo(
+        #                 photo=file_url,
+        #                 caption=f"File ID: {file_id}",
+        #                 reply_markup=get_download_button(file_id),
+        #             )
+        #             logger.info(f"File transferred: file_id={file_id}, file_url={file_url}")
+                
+        #             await state.update_data(file_id=file_id)
+        #             return 
+        #     else:
+        #         logger.info("Ключ 'data' не найден.")
+        #     await message.answer('Файлы не найдены для указанных параметров.')
+        #     logger.info('File not found')
+
 
 
 # @files_router.message(F.text & FilesStates.waiting_for_day)
