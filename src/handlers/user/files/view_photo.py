@@ -9,6 +9,7 @@ from src.logger import logger
 from src.utils.request import do_request
 from aiogram.types import KeyboardButton, InputFile
 from conf.config import settings
+from urllib.parse import quote
 
 
 YEAR_KEYBOARD = types.ReplyKeyboardMarkup(keyboard=[], resize_keyboard=True)
@@ -104,19 +105,26 @@ async def process_day(message: types.Message, state: FSMContext) -> None:
 
             if len(files) > 0:
                 for file_info in files:
+                    logger.info(f'Инф. в файле{file_info}')
                     file_name = file_info.get('file_name')
-                    file_id = file_info.get('file_id')
+                    file_id = file_info.get('id')
 
                     if file_name and file_id:
-                        file_url = f"{settings.PHOTO_BACKEND_HOST}/files/{file_name}"
-                        await message.answer_photo(
-                            photo=file_url,
-                            caption=f"File ID: {file_id}",
-                            reply_markup=get_download_button(file_id),
-                        )
-                        logger.info(f"File transferred: file_id={file_id}, file_name={file_url}")
+                        #file_url = f"{settings.PHOTO_BACKEND_HOST}/files/{file_name}"
+                        file_url = f"{settings.PHOTO_BACKEND_HOST}/file/{quote(file_name)}"
+                        logger.info(f"Сформированный URL: {file_url}")    
+                        if file_url.startswith(('http://', 'https://')) and file_url:
+                            await message.answer_photo(
+                                photo=file_url,
+                                caption=f"File ID: {file_id}",
+                                reply_markup=get_download_button(file_id),
+                            )
+                            logger.info(f"File transferred: file_id={file_id}, file_name={file_url}")
+                        else:
+                            logger.warning(f"Некорректный URL: {file_url}")
+                            await message.answer("Ошибка: некорректный URL для файла.")
 
-                        # Обновляем состояние для каждого файла, если это необходимо
+                        # обновляем состояние для каждого файла, если это необходимо
                         await state.update_data(file_id=file_id)
                     else:
                         logger.info("URL или ID файла отсутствует.")
