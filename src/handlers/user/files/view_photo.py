@@ -74,20 +74,20 @@ async def process_day(message: types.Message, state: FSMContext) -> None:
     if current_state == FilesStates.waiting_for_day.state: 
         day = int(message.text)
         logger.info(f"День {day}")
-        data = await state.get_data()
-        logger.info(f"Дата {data}")
-        year = data.get('year')
+        state_data = await state.get_data()
+        logger.info(f"Год, месяц из стейт {state_data}")
+        year = state_data.get('year')
         logger.info(f"Год {year}")
-        month = data.get('month')
+        month = state_data.get('month')
         logger.info(f"Месяц {month}")
         logger.info(f"Пользователь {user_id} выбрал дату: {year}-{month}-{day}")
 
-        try:
-            data = await do_request(
+        try: # api_response — словарь, нужно проверить наличие ключа 'data' в словаре
+            api_response = await do_request(
                 f'{settings.PHOTO_BACKEND_HOST}/file/file/?year={year}&month={month}&day={day}',
                 method='GET'
             )
-            logger.info(f"Данные из do_request: {data}")
+            logger.info(f"Данные из do_request: {api_response}")
         except ClientResponseError as e:
             if "Not Found" in e.message:
                 await message.answer('Файлы не найдены для указанных параметров.')
@@ -98,8 +98,12 @@ async def process_day(message: types.Message, state: FSMContext) -> None:
                 logger.info('Code Error')
             return
         
-        if 'data' in data and data['data']:
-            files = data['data']
+        if 'data' in api_response and api_response['data']:
+        #if 'data' in api_response:
+            logger.info("Ключ 'data' найден.")
+            logger.info(f"Содержимое api_response['data']: {api_response['data']}")
+            files = api_response['data']
+            logger.info(files)
             await message.answer('первый if')
             if len(files) > 0:
                 file_info = files[0]  
@@ -116,7 +120,9 @@ async def process_day(message: types.Message, state: FSMContext) -> None:
                     logger.info(f"File transferred: file_id={file_id}, file_url={file_url}")
                 
                     await state.update_data(file_id=file_id)
-                    return
+                    return 
+            else:
+                logger.info("Ключ 'data' не найден.")
             await message.answer('Файлы не найдены для указанных параметров.')
             logger.info('File not found')
 
