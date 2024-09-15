@@ -1,4 +1,5 @@
 from aiogram import F, types
+from aiogram.types import URLInputFile
 from aiogram.fsm.context import FSMContext
 from aiohttp import ClientResponseError
 from src.state.file_state import FilesStates
@@ -118,16 +119,25 @@ async def process_day(message: types.Message, state: FSMContext) -> None:
                         logger.info(f"Преобразованный ID Файла: {file_id_str}")
                         logger.info(f"Тип преобразованного ID Файла: {type(file_id_str)}")
 
-                        file_url = f"http://localhost:8002/file/{file_id_str}"
+                        #file_url = f"http://localhost:8002/file/{file_id_str}"
+                        #file_url = f"{settings.PHOTO_BACKEND_HOST}/file/{file_id_str}" 
+
+                        file_url = URLInputFile(f"{settings.PHOTO_BACKEND_HOST}/file/{file_id_str}")
 
                         logger.info(f"Сформированный URL: {file_url}")    
-                        if file_url.startswith(('http://', 'https://')) and file_url:
-                            logger.info(f"Отправка фото с URL: {file_url} и ID файла: {file_id}")
+                        #if file_url.startswith(('http://', 'https://')) and file_url:
+                        if file_url:
+                            logger.info(f"Отправка фото с URL: {file_url} и ID файла: {file_id}")                            
                             await message.answer_photo(
-                                photo=file_url,
+                                file_url,
                                 caption=f"File ID: {file_id}",
                                 reply_markup=get_download_button(file_id),
                             )
+                            # await message.answer_photo(
+                            #     photo=file_url,
+                            #     caption=f"File ID: {file_id}",
+                            #     reply_markup=get_download_button(file_id),
+                            # )
                             logger.info(f"File transferred: file_id={file_id}, file_name={file_url}")
                         else:
                             logger.warning(f"Некорректный URL: {file_url}")
