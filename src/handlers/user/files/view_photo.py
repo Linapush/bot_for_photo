@@ -111,7 +111,26 @@ async def process_day(message: types.Message, state: FSMContext) -> None:
 
                     if file_name and file_id:
                         #file_url = f"{settings.PHOTO_BACKEND_HOST}/files/{file_name}"
-                        file_url = f"{settings.PHOTO_BACKEND_HOST}/file/{quote(file_name)}"
+                        #file_url = f"{settings.PHOTO_BACKEND_HOST}/file/{quote(file_name)}"
+
+                        # curl -I http://web_dev:8002/file/file/file_323.jpg
+                        # bot  | Telegram server says - Bad Request: wrong HTTP URL specified
+                        # response: curl: (6) Could not resolve host: web_dev
+
+                        # curl -I http://localhost:8002/file/file/file_323.jpg
+                        # response:
+                        # HTTP/1.1 404 Not Found
+                        # date: Sun, 15 Sep 2024 06:12:42 GMT
+                        # server: uvicorn
+                        # content-length: 22
+                        # content-type: application/json
+
+                        # file_url = f"http://localhost:8002/file/file/{quote(file_id)}"
+                        # bot  | quote_from_bytes() expected bytes 
+
+                        file_url = f"http://localhost:8002/file/file/{file_id}"
+                        # bot  | Telegram server says - Bad Request: wrong remote file identifier specified: Wrong character in the string
+
                         logger.info(f"Сформированный URL: {file_url}")    
                         if file_url.startswith(('http://', 'https://')) and file_url:
                             await message.answer_photo(
@@ -137,6 +156,9 @@ async def process_day(message: types.Message, state: FSMContext) -> None:
         await message.answer('Файлы не найдены для указанных параметров.')
         logger.info('File not found')
         
+        
+        #####################################################
+        # для data (если бы была)
         # if 'data' in api_response and api_response['data']:
         # #if 'data' in api_response:
         #     logger.info("Ключ 'data' найден.")
@@ -166,7 +188,8 @@ async def process_day(message: types.Message, state: FSMContext) -> None:
         #     logger.info('File not found')
 
 
-
+#############################################################
+# старый вариант
 # @files_router.message(F.text & FilesStates.waiting_for_day)
 # @files_router.message(F.text)
 # @files_router.message(FilesStates.waiting_for_day)
@@ -215,3 +238,4 @@ async def process_day(message: types.Message, state: FSMContext) -> None:
 #                 await message.answer('Произошла ошибка.')
 #                 logger.error(f'Error getting files: {e}')
 #                 return
+        
