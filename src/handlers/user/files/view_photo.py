@@ -110,29 +110,19 @@ async def process_day(message: types.Message, state: FSMContext) -> None:
                     file_id = file_info.get('id')
 
                     if file_name and file_id:
-                        #file_url = f"{settings.PHOTO_BACKEND_HOST}/files/{file_name}"
-                        #file_url = f"{settings.PHOTO_BACKEND_HOST}/file/{quote(file_name)}"
+                        logger.info(f"Имя файла: {file_name}")
+                        logger.info(f"ID Файла: {file_id}")
+                        logger.info(f"ID Файла: {type(file_id)}")
 
-                        # curl -I http://web_dev:8002/file/file/file_323.jpg
-                        # bot  | Telegram server says - Bad Request: wrong HTTP URL specified
-                        # response: curl: (6) Could not resolve host: web_dev
+                        file_id_str = str(file_id)
+                        logger.info(f"Преобразованный ID Файла: {file_id_str}")
+                        logger.info(f"Тип преобразованного ID Файла: {type(file_id_str)}")
 
-                        # curl -I http://localhost:8002/file/file/file_323.jpg
-                        # response:
-                        # HTTP/1.1 404 Not Found
-                        # date: Sun, 15 Sep 2024 06:12:42 GMT
-                        # server: uvicorn
-                        # content-length: 22
-                        # content-type: application/json
-
-                        # file_url = f"http://localhost:8002/file/file/{quote(file_id)}"
-                        # bot  | quote_from_bytes() expected bytes 
-
-                        file_url = f"http://localhost:8002/file/file/{file_id}"
-                        # bot  | Telegram server says - Bad Request: wrong remote file identifier specified: Wrong character in the string
+                        file_url = f"http://localhost:8002/file/{file_id_str}"
 
                         logger.info(f"Сформированный URL: {file_url}")    
                         if file_url.startswith(('http://', 'https://')) and file_url:
+                            logger.info(f"Отправка фото с URL: {file_url} и ID файла: {file_id}")
                             await message.answer_photo(
                                 photo=file_url,
                                 caption=f"File ID: {file_id}",
@@ -156,7 +146,7 @@ async def process_day(message: types.Message, state: FSMContext) -> None:
         await message.answer('Файлы не найдены для указанных параметров.')
         logger.info('File not found')
         
-        
+
         #####################################################
         # для data (если бы была)
         # if 'data' in api_response and api_response['data']:
@@ -239,3 +229,10 @@ async def process_day(message: types.Message, state: FSMContext) -> None:
 #                 logger.error(f'Error getting files: {e}')
 #                 return
         
+###########
+# file_url = f"http://localhost:8002/file/file/{quote(file_id)}"
+# bot  | quote_from_bytes() expected bytes 
+
+# file_url = f"http://localhost:8002/file/file/{file_id}"
+# file_url = f"http://localhost:8002/file/{str(file_id)}"
+# bot  | Telegram server says - Bad Request: wrong remote file identifier specified: Wrong character in the string
