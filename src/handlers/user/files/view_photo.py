@@ -1,5 +1,6 @@
+import requests
+from io import BytesIO
 from aiogram import F, types
-from aiogram.types import URLInputFile
 from aiogram.fsm.context import FSMContext
 from aiohttp import ClientResponseError
 from src.state.file_state import FilesStates
@@ -8,7 +9,7 @@ from src.buttons.files.get_download_button import get_download_button
 from src.handlers.user.files.router import files_router
 from src.logger import logger
 from src.utils.request import do_request
-from aiogram.types import KeyboardButton, InputFile
+from aiogram.types import KeyboardButton, InputFile, URLInputFile
 from conf.config import settings
 from urllib.parse import quote
 
@@ -119,26 +120,35 @@ async def process_day(message: types.Message, state: FSMContext) -> None:
                         logger.info(f"Преобразованный ID Файла: {file_id_str}")
                         logger.info(f"Тип преобразованного ID Файла: {type(file_id_str)}")
 
-                        #file_url = f"http://localhost:8002/file/{file_id_str}"
-                        #file_url = f"{settings.PHOTO_BACKEND_HOST}/file/{file_id_str}" 
+                        file_url = f"{settings.PHOTO_BACKEND_HOST}/file/{file_id_str}" 
+                        logger.info(f"Сформированный URL: {file_url}")
 
-                        file_url = URLInputFile(f"{settings.PHOTO_BACKEND_HOST}/file/{file_id_str}")
+                        if file_url.startswith(('http://', 'https://')) and file_url:
+                            logger.info(f"Отправка фото с URL: {file_url} и ID файла: {file_id}")  
 
-                        logger.info(f"Сформированный URL: {file_url}")    
-                        #if file_url.startswith(('http://', 'https://')) and file_url:
-                        if file_url:
-                            logger.info(f"Отправка фото с URL: {file_url} и ID файла: {file_id}")                            
-                            await message.answer_photo(
-                                file_url,
-                                caption=f"File ID: {file_id}",
-                                reply_markup=get_download_button(file_id),
-                            )
-                            # await message.answer_photo(
-                            #     photo=file_url,
-                            #     caption=f"File ID: {file_id}",
-                            #     reply_markup=get_download_button(file_id),
-                            # )
-                            logger.info(f"File transferred: file_id={file_id}, file_name={file_url}")
+                            response = requests.get(file_url)
+                            if response.status_code == 200:
+                                content = response.content
+
+                                photo_input_file = InputFile(BytesIO(content), filename=file_name) 
+                                logger.info(f"Объект файла успешно создан: {photo_input_file}")   
+
+                                await message.answer_photo(
+                                    photo=photo_input_file,
+                                    #photo=file_url,
+                                    caption=f"File ID: {file_id}",
+                                    reply_markup=get_download_button(file_id),
+                                )
+                                logger.info(f"Файл успешно передан: file_id={file_id}, file_name={file_url}")
+                            else:
+                                logger.error(f"Ошибка загрузки файла: получен статус код {response.status_code} для URL: {file_url}")
+
+                                if response.status_code == 404:
+                                    await message.answer("Ошибка: файл не найден.")
+                                elif response.status_code == 500:
+                                    await message.answer("Ошибка: внутреняя ошибка сервера. Попробуйте позже.")
+                                else:
+                                    await message.answer("Ошибка: не удалось загрузить файл. Пожалуйста, проверьте доступность файла.")
                         else:
                             logger.warning(f"Некорректный URL: {file_url}")
                             await message.answer("Ошибка: некорректный URL для файла.")
@@ -146,46 +156,12 @@ async def process_day(message: types.Message, state: FSMContext) -> None:
                         # обновляем состояние для каждого файла, если это необходимо
                         await state.update_data(file_id=file_id)
                     else:
-                        logger.info("URL или ID файла отсутствует.")
-                
+                        logger.warning("URL или ID файла отсутствует.")
+                        await message.answer("Ошибка: имя файла или ID отсутствует.")
                 return 
             else:
-                logger.info("Список файлов пуст.")
-        else:
-            logger.info("Ключ 'data' не найден.")
-        await message.answer('Файлы не найдены для указанных параметров.')
-        logger.info('File not found')
-        
-
-        #####################################################
-        # для data (если бы была)
-        # if 'data' in api_response and api_response['data']:
-        # #if 'data' in api_response:
-        #     logger.info("Ключ 'data' найден.")
-        #     logger.info(f"Содержимое api_response['data']: {api_response['data']}")
-        #     files = api_response['data']
-        #     logger.info(files)
-        #     await message.answer('первый if')
-        #     if len(files) > 0:
-        #         file_info = files[0]  
-        #         file_url = file_info.get('file_url')
-        #         file_id = file_info.get('file_id')
-        #         await message.answer('второй if')
-
-        #         if file_url and file_id:
-        #             await message.answer_photo(
-        #                 photo=file_url,
-        #                 caption=f"File ID: {file_id}",
-        #                 reply_markup=get_download_button(file_id),
-        #             )
-        #             logger.info(f"File transferred: file_id={file_id}, file_url={file_url}")
-                
-        #             await state.update_data(file_id=file_id)
-        #             return 
-        #     else:
-        #         logger.info("Ключ 'data' не найден.")
-        #     await message.answer('Файлы не найдены для указанных параметров.')
-        #     logger.info('File not found')
+                logger.warning("Список файлов пуст.")
+                await message.answer('Ошибка: файлы не найдены для указанных параметров.')
 
 
 #############################################################
