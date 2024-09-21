@@ -1,13 +1,14 @@
-from aiogram import types
-from aiogram.fsm.context import FSMContext
 from aiohttp.client_exceptions import ClientResponseError
 
+from aiogram import types
+from aiogram.fsm.context import FSMContext
+
+from conf.config import settings
+from src.buttons.actions.getter import get_main_keyboard
 from src.handlers.login.router import login_router
 from src.logger import logger
 from src.state.login import LoginState
 from src.utils.request import do_request
-from conf.config import settings
-from src.buttons.actions.getter import get_main_keyboard
 
 
 @login_router.message(LoginState.enter_code)

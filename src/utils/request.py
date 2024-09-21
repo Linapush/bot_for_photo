@@ -31,7 +31,7 @@ async def do_request(
 ) -> Any:
     try:
         headers_ = {'Authorization': f'Bearer {access_token_cxt.get()}'}
-        logger.info(f"Токен доступа в заголовке запроса: {headers_['Authorization']}")
+        logger.info(f'Токен доступа в заголовке запроса: {headers_["Authorization"]}')
     except LookupError:
         headers_ = {}
 

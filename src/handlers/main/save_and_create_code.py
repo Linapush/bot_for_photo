@@ -1,16 +1,19 @@
 import random
 import string
 import time
-from aiogram import types
-from src.utils.request import do_request
-from conf.config import settings
+
 from aiohttp.client_exceptions import ClientResponseError
+from aiogram import types
+
+from conf.config import settings
 from src.logger import logger
+from src.utils.request import do_request
 
 
 # async def get_unique_code() -> str:
 #     code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
 #     return code
+
 
 async def create_unique_code() -> str:
     current_milliseconds = int(round(time.time() * 1000))
@@ -43,7 +46,8 @@ async def get_existing_code(user_id: int) -> str:
     except ClientResponseError:
         logger.error('Code error')
         return ''
-    
+
+
 # создание кода для пользователя
 async def save_code_to_database(user_id: int, code: str):
     try:
@@ -57,4 +61,3 @@ async def save_code_to_database(user_id: int, code: str):
         logger.info("Код сохранен успешно")
     except ClientResponseError:
         logger.error("Ошибка в сохранении кода")
-

@@ -1,11 +1,12 @@
 import asyncio
-from src.state.login import LoginState
+
 from aiogram import types
 from aiogram.filters.command import CommandStart
 from aiogram.fsm.context import FSMContext
 
-from src.handlers.main.router import main_router
 from src.logger import logger
+from src.state.login import LoginState
+from src.handlers.main.router import main_router
 from src.handlers.main.save_and_create_code import get_or_create_unique_code
 
 

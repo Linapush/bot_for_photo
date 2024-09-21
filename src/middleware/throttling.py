@@ -1,9 +1,13 @@
 from __future__ import annotations
 from typing import *
+
+import time
+
 from aiogram import BaseMiddleware
 from aiogram.types import Message
-import time
+
 from src.integrations.redis import Redis
+
 
 # предотсращение флуда от пользователей, 
 # ограничение количества запросов за определенный период времени

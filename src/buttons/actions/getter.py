@@ -1,17 +1,19 @@
 from typing import Callable, ParamSpec
+
 from aiogram import types
 
-# основная клавиатуру для бота 
 
 UPLOAD_PHOTO = 'Загрузить фото в хранилище'
 VIEW_PHOTO = 'Посмотреть фото'
-# SELECT_PHOTO = 'Выбрать фото' # скачать можно пока только просмотренное фото в разрезе
 DOWNLOAD_PHOTO = 'Скачать выбранное фото'
+
 
 P = ParamSpec('P')
 
+
 def get_main_keyboard(role: str, **kwargs) -> types.ReplyKeyboardMarkup:
     return role_to_keyboard_getter[role](**kwargs)
+
 
 def _get_keyboard_user(*kwargs) -> types.ReplyKeyboardMarkup:
     kb = [

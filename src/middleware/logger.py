@@ -7,8 +7,10 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 
 from src.logger import correlation_id_ctx
 
+
 # Middleware для добавления корелляционного идентификатора к сообщениям логов
 # ... гарантирует, что каждый запрос получит уникальный идентификатор, который будет записан в лог
+
 
 class LogServerMiddleware:
     def __init__(self, app: ASGIApp):

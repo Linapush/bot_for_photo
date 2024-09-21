@@ -12,9 +12,9 @@ root:
   level: INFO
   handlers: [console]
 loggers:
-  'bot':
+  "bot":
     level: INFO
     propagate: yes
-  'uvicorn':
+  "uvicorn":
     level: INFO
     propagate: yes

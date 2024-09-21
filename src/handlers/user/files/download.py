@@ -1,11 +1,12 @@
 import io
+
 from aiogram import F, types
 from aiogram.fsm.context import FSMContext
-from src.state.file_state import FilesStates
+
 from src.buttons.actions.getter import get_main_keyboard
 from src.handlers.user.files.router import files_router
+from src.state.file_state import FilesStates
 from src.utils.request import do_request
-from conf.config import settings
 
 
 @files_router.message(FilesStates.waiting_for_day)

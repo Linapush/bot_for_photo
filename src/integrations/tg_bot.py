@@ -1,8 +1,8 @@
 from aiogram import Bot, Dispatcher
 
+from conf.config import settings
 from src.on_startup.dispatcher import setup_dispatcher
 
-from conf.config import settings
 
 bot = Bot(token=settings.BOT_TOKEN)
 dp = setup_dispatcher(bot)

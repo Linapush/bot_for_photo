@@ -1,15 +1,15 @@
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.redis import RedisStorage
 
-from src.handlers.login.router import login_router
-from src.handlers.main.router import main_router
-from src.handlers.user.router import user_router
-from src.handlers.user.files.router import files_router
-
 from src.integrations.redis import redis
 from src.middleware.auth import AuthMiddleware
 from src.middleware.logger import LogMessageMiddleware
 from src.middleware.throttling import ThrottlingMiddleware
+
+from src.handlers.login.router import login_router
+from src.handlers.main.router import main_router
+from src.handlers.user.router import user_router
+from src.handlers.user.files.router import files_router
 
 
 def setup_dispatcher(bot: Bot) -> Dispatcher:

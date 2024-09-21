@@ -1,17 +1,18 @@
 import requests
 from io import BytesIO
+
 from aiogram import F, types
+from aiogram.types import KeyboardButton, InputFile, URLInputFile
 from aiogram.fsm.context import FSMContext
 from aiohttp import ClientResponseError
+
 from src.state.file_state import FilesStates
 from src.buttons.actions.getter import VIEW_PHOTO, get_main_keyboard
 from src.buttons.files.get_download_button import get_download_button
 from src.handlers.user.files.router import files_router
 from src.logger import logger
 from src.utils.request import do_request
-from aiogram.types import KeyboardButton, InputFile, URLInputFile
 from conf.config import settings
-from urllib.parse import quote
 
 
 YEAR_KEYBOARD = types.ReplyKeyboardMarkup(keyboard=[], resize_keyboard=True)

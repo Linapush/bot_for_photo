@@ -2,14 +2,14 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
+import requests
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from src.middleware.router import router
 from src.integrations.redis import redis
 from src.middleware.throttling import ThrottlingMiddleware
-
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-import requests
 from src.api.tg.router import tg_router
 from src.integrations.tg_bot import bot
 from src.middleware.logger import LogServerMiddleware
@@ -35,7 +35,7 @@ def setup_middleware(app: FastAPI) -> None:
 
 def setup_routers(app: FastAPI) -> None:
     app.include_router(tg_router)
-    app.include_router(router.message.middleware(ThrottlingMiddleware(redis))) # здесь trottling
+    app.include_router(router.message.middleware(ThrottlingMiddleware(redis)))
 
 
 @asynccontextmanager
