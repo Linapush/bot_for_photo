@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     PHOTO_BACKEND_HOST: str = 'http://web_dev:8002'
 
     BOT_TOKEN: str
+    AUTHORIZATION_TOKEN: str
     WEBHOOK_URL: str = ''
 
     REDIS_HOST: str = 'redis_dev'

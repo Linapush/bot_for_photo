@@ -1,8 +1,7 @@
-import requests
-from io import BytesIO
+import aiohttp
 
 from aiogram import F, types
-from aiogram.types import KeyboardButton, InputFile, URLInputFile
+from aiogram.types import KeyboardButton, BufferedInputFile, URLInputFile
 from aiogram.fsm.context import FSMContext
 from aiohttp import ClientResponseError
 
@@ -105,64 +104,123 @@ async def process_day(message: types.Message, state: FSMContext) -> None:
         if isinstance(api_response, list) and api_response:
             logger.info("Получен непустой список файлов.")
             files = api_response
+            for file_data in files:
+                logger.info(f"Информация о файле: {file_data}")
+                file_info = file_data
 
-            if len(files) > 0:
-                for file_info in files:
-                    logger.info(f'Инф. в файле{file_info}')
+                if file_info:
                     file_name = file_info.get('file_name')
                     file_id = file_info.get('id')
+                    file_type = file_info.get('file_type')
+                    download_url = file_info.get('download_url')
 
-                    if file_name and file_id:
-                        logger.info(f"Имя файла: {file_name}")
-                        logger.info(f"ID Файла: {file_id}")
-                        logger.info(f"ID Файла: {type(file_id)}")
+                    if not download_url:
+                        logger.error("Download URL отсутствует.")
+                        await message.answer("Ошибка: ссылка для скачивания файла отсутствует.")
+                        continue
 
-                        file_id_str = str(file_id)
-                        logger.info(f"Преобразованный ID Файла: {file_id_str}")
-                        logger.info(f"Тип преобразованного ID Файла: {type(file_id_str)}")
-
-                        file_url = f"{settings.PHOTO_BACKEND_HOST}/file/{file_id_str}" 
-                        logger.info(f"Сформированный URL: {file_url}")
-
-                        if file_url.startswith(('http://', 'https://')) and file_url:
-                            logger.info(f"Отправка фото с URL: {file_url} и ID файла: {file_id}")  
-
-                            response = requests.get(file_url)
-                            if response.status_code == 200:
-                                content = response.content
-
-                                photo_input_file = InputFile(BytesIO(content), filename=file_name) 
-                                logger.info(f"Объект файла успешно создан: {photo_input_file}")   
-
-                                await message.answer_photo(
-                                    photo=photo_input_file,
-                                    #photo=file_url,
-                                    caption=f"File ID: {file_id}",
-                                    reply_markup=get_download_button(file_id),
-                                )
-                                logger.info(f"Файл успешно передан: file_id={file_id}, file_name={file_url}")
-                            else:
-                                logger.error(f"Ошибка загрузки файла: получен статус код {response.status_code} для URL: {file_url}")
-
-                                if response.status_code == 404:
-                                    await message.answer("Ошибка: файл не найден.")
-                                elif response.status_code == 500:
-                                    await message.answer("Ошибка: внутреняя ошибка сервера. Попробуйте позже.")
+                    try:
+                        headers = {
+                            'Authorization': f'Bearer {settings.AUTHORIZATION_TOKEN}'
+                        }
+                        async with aiohttp.ClientSession() as session:
+                            async with session.get(download_url, headers=headers) as resp:
+                                if resp.status == 200:
+                                    file_bytes = await resp.read()
                                 else:
-                                    await message.answer("Ошибка: не удалось загрузить файл. Пожалуйста, проверьте доступность файла.")
-                        else:
-                            logger.warning(f"Некорректный URL: {file_url}")
-                            await message.answer("Ошибка: некорректный URL для файла.")
+                                    logger.error(f"Ошибка при запросе файла: статус {resp.status}")
+                                    await message.answer("Ошибка при получении файла. Попробуйте позже.")
+                                    continue
+                    except Exception as e:
+                        logger.error(f"Ошибка при запросе файла: {e}")
+                        await message.answer("Ошибка при получении файла. Попробуйте позже.")
+                        continue
 
-                        # обновляем состояние для каждого файла, если это необходимо
-                        await state.update_data(file_id=file_id)
-                    else:
-                        logger.warning("URL или ID файла отсутствует.")
-                        await message.answer("Ошибка: имя файла или ID отсутствует.")
-                return 
-            else:
-                logger.warning("Список файлов пуст.")
-                await message.answer('Ошибка: файлы не найдены для указанных параметров.')
+                    file_input = BufferedInputFile(file_bytes, filename=file_name)
+
+                    try:
+                        if file_type.startswith('image/'):
+                            await message.answer_photo(
+                                photo=file_input,
+                                caption=f"File ID: {file_id}",
+                                reply_markup=get_download_button(file_id),
+                            )
+                        else:
+                            await message.answer_document(
+                                document=file_input,
+                                caption=f"File ID: {file_id}",
+                                reply_markup=get_download_button(file_id),
+                            )
+                        logger.info(f"Файл успешно передан: file_id={file_id}, file_name={file_name}")
+
+                    except Exception as e:
+                        logger.error(f"Ошибка при отправке файла: {e}")
+                        await message.answer("Ошибка при отправке файла. Попробуйте позже.")
+                else:
+                    logger.warning("Отсутствует информация о файле.")
+                    await message.answer("Ошибка: данные о файле отсутствуют.")
+        else:
+            logger.warning("Список файлов пуст.")
+            await message.answer('Файлы не найдены для указанных параметров.')
+
+            
+            # if len(files) > 0:
+            #     for file_info in files:
+            #         logger.info(f'Инф. в файле{file_info}')
+            #         file_name = file_info.get('file_name')
+            #         file_id = file_info.get('id')
+
+            #         if file_name and file_id:
+            #             logger.info(f"Имя файла: {file_name}")
+            #             logger.info(f"ID Файла: {file_id}")
+            #             logger.info(f"ID Файла: {type(file_id)}")
+
+            #             file_id_str = str(file_id)
+            #             logger.info(f"Преобразованный ID Файла: {file_id_str}")
+            #             logger.info(f"Тип преобразованного ID Файла: {type(file_id_str)}")
+
+            #             file_url = f"{settings.PHOTO_BACKEND_HOST}/file/{file_id_str}" 
+            #             logger.info(f"Сформированный URL: {file_url}")
+
+            #             if file_url.startswith(('http://', 'https://')) and file_url:
+            #                 logger.info(f"Отправка фото с URL: {file_url} и ID файла: {file_id}")  
+
+            #                 response = requests.get(file_url)
+            #                 if response.status_code == 200:
+            #                     content = response.content
+
+            #                     photo_input_file = InputFile(BytesIO(content), filename=file_name) 
+            #                     logger.info(f"Объект файла успешно создан: {photo_input_file}")   
+
+            #                     await message.answer_photo(
+            #                         photo=photo_input_file,
+            #                         #photo=file_url,
+            #                         caption=f"File ID: {file_id}",
+            #                         reply_markup=get_download_button(file_id),
+            #                     )
+            #                     logger.info(f"Файл успешно передан: file_id={file_id}, file_name={file_url}")
+            #                 else:
+            #                     logger.error(f"Ошибка загрузки файла: получен статус код {response.status_code} для URL: {file_url}")
+
+            #                     if response.status_code == 404:
+            #                         await message.answer("Ошибка: файл не найден.")
+            #                     elif response.status_code == 500:
+            #                         await message.answer("Ошибка: внутреняя ошибка сервера. Попробуйте позже.")
+            #                     else:
+            #                         await message.answer("Ошибка: не удалось загрузить файл. Пожалуйста, проверьте доступность файла.")
+            #             else:
+            #                 logger.warning(f"Некорректный URL: {file_url}")
+            #                 await message.answer("Ошибка: некорректный URL для файла.")
+
+            #             # обновляем состояние для каждого файла, если это необходимо
+            #             await state.update_data(file_id=file_id)
+            #         else:
+            #             logger.warning("URL или ID файла отсутствует.")
+            #             await message.answer("Ошибка: имя файла или ID отсутствует.")
+            #     return 
+            # else:
+            #     logger.warning("Список файлов пуст.")
+            #     await message.answer('Ошибка: файлы не найдены для указанных параметров.')
 
 
 #############################################################

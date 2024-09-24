@@ -1,0 +1,7 @@
+tunnels:
+  backend:
+    addr: 8002
+    proto: http
+  minio:
+    addr: 9001
+    proto: http
